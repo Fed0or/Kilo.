@@ -1,0 +1,29 @@
+{
+  // Kilo-projektkonfig: lokal modell via LM Studio (ingen API-nyckel behövs).
+  // LM Studio-servern måste vara startad (standard: http://localhost:1234/v1).
+  // Annan port/värd? Lägg till: "options": { "baseURL": "http://localhost:PORT/v1" } under "lmstudio".
+  "$schema": "https://app.kilo.ai/config.json",
+
+  // En enda agent för allt: kod, 3D och artiklar.
+  "model": "lmstudio/gpt-oss-120b",
+
+  "provider": {
+    "lmstudio": {
+      "models": {
+        // Huvudmodell. "id" måste vara exakt det LM Studio visar på http://localhost:1234/v1/models
+        "gpt-oss-120b": {
+          "id": "openai/gpt-oss-120b",
+          "name": "gpt-oss-120b (lokal, huvudmodell)",
+          // Ladda modellen i LM Studio med minst lika stor context length.
+          "limit": { "context": 65536, "output": 16384 }
+        },
+        // Reserv: används bara när något måste granskas visuellt (skärmdump, render, bild).
+        "qwen2.5-vl-32b": {
+          "id": "qwen2.5-vl-32b-instruct",
+          "name": "Qwen2.5-VL-32B (lokal, bara bildgranskning)",
+          "limit": { "context": 32768, "output": 8192 }
+        }
+      }
+    }
+  }
+}
