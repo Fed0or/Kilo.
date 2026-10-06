@@ -6,13 +6,14 @@ description: Build, fix or extend 3D scenes for the browser with Three.js (viewe
 # Three.js scene workflow
 
 ## 1. Setup
+- **Start from the tested starter** in `assets/starter/` (next to this file) instead of writing from memory: copy it to `3d/<project-name>/`, run `npm install`, then edit `src/main.js`. It already contains the baseline from section 2, model loading via `?model=/models/asset.glb`, and the headless check from section 4. Verified with three 0.180, vite 7 and playwright 1.63.
 - Default stack: Vite + `three` from npm, plain JavaScript ES modules (TypeScript only if the project already uses it). Do not load Three.js from a CDN unless asked.
 - Your memory of the Three.js API may be outdated. Before using an unfamiliar API, read `node_modules/three/package.json` for the installed version and look in `node_modules/three/examples/jsm/` or `node_modules/three/src/` for the real signature instead of guessing.
 - Addons import as `import { OrbitControls } from 'three/addons/controls/OrbitControls.js'` (also `GLTFLoader`, `DRACOLoader`, `RGBELoader`).
 
 ## 2. Scene baseline (always include)
 - `renderer.setPixelRatio(Math.min(devicePixelRatio, 2))`, `renderer.outputColorSpace = THREE.SRGBColorSpace`, tone mapping `THREE.ACESFilmicToneMapping`.
-- Perspective camera that frames the content: compute `new THREE.Box3().setFromObject(root)`, then place the camera from the box size and center. Never hardcode a distance for a loaded model.
+- Perspective camera that frames the content: compute `new THREE.Box3().setFromObject(root)`, then place the camera from the bounding-sphere radius (half the box diagonal, not the largest side, or corners get clipped) and the narrower of the vertical/horizontal field of view. Never hardcode a distance for a loaded model.
 - Light: `HemisphereLight` + one `DirectionalLight` (shadows only if requested). Add an environment map for PBR materials, otherwise metals render black.
 - `OrbitControls` with `enableDamping`; render loop through `renderer.setAnimationLoop`.
 - Resize handler updating camera aspect, projection matrix and renderer size.
@@ -24,9 +25,9 @@ description: Build, fix or extend 3D scenes for the browser with Three.js (viewe
 - Handle load errors visibly (console + on-screen message), and show progress for files over ~2 MB.
 
 ## 4. Verify (the main model cannot see images)
-1. `npm run build` must pass with no errors.
-2. Start the dev server and take a headless screenshot: `npx playwright screenshot --viewport-size=1280,720 http://localhost:5173 out/shot.png`. Collect browser console errors and treat any as failures.
-3. Check numerically what you cannot see: bounding box is non-empty and inside the camera frustum, no NaN in transforms, canvas size is non-zero, the first frame rendered.
+1. Run `npm run check` in the project folder. It builds, serves `dist/`, opens the page in headless Chromium and fails on: any console or page error, failed requests, zero-size canvas, no rendered frames, missing or non-finite bounding box, content cut off by the viewport (any bbox corner outside the view), or an almost blank image (under 3 % of sampled pixels differ from the background). It writes `out/shot.png`. Pass a query for a model: `npm run check -- "?model=/models/asset.glb"` (`public/models/cube.glb` is a tiny test model).
+2. First time on a machine: `npx playwright install chromium`. If the browser lives elsewhere, set `CHROMIUM_PATH` to its executable.
+3. If you change what the page exposes (`window.__app`: `ready`, `frames`, `bbox`, `coverage()`, `inView()`), update `scripts/check.mjs` to match. Never loosen a check to make it pass; fix the scene.
 4. Only when a visual judgement is truly needed (composition, materials, "does it look right"): switch the Kilo model to `Qwen2.5-VL-32B`, attach `out/shot.png`, ask for a concrete review checklist, then switch back to `gpt-oss-120b` for the fixes. Do not use the vision model for coding.
 
 ## 5. Assets from Blender (only if a model must be created or converted)

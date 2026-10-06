@@ -31,16 +31,29 @@ Obs: Qwen2.5-VL i GGUF-form behöver sin `mmproj`-fil bredvid modellfilen för a
 4. Ladda om VS Code/Kilo en gång så att skills i `.kilo/skills/` hittas.
 5. Din Kilo-profil (https://app.kilo.ai/profile) behövs bara för Kilos molntjänster. Lokala modeller går via LM Studio och kostar inga krediter.
 
+## Testa i desktop-appen (Windows)
+
+1. Öppna repo-mappen i Claude desktop / VS Code med Kilo, starta LM Studio-servern och kör `node tools/sync-lmstudio-ids.mjs`.
+2. Prova 3D-flödet utan någon modell först (bevisar att Node, Chromium och mallen fungerar hos dig):
+   ```
+   cd .kilo\skills\threejs-scene\assets\starter
+   npm install
+   npx playwright install chromium
+   npm run check
+   ```
+   Förväntat: `CHECK OK -> out/shot.png`, och bilden visar en guldig metallknut på ett grått golv.
+3. Be sedan Kilo (gpt-oss-120b): *"Gör en 3D-visare för en blå kub som kan roteras"* och se att den använder `threejs-scene`, kopierar mallen till `3d/` och kör `npm run check`. Be den därefter skriva en artikel och se att den använder `article-writing` och sparar i `articles/`.
+
 ## Innehåll
 
 - `kilo.jsonc` – projektkonfig: LM Studio, huvudmodell och reservmodell.
 - `tools/sync-lmstudio-ids.mjs` – synkar modell-id:n från LM Studio till `kilo.jsonc`.
 - `AGENTS.md` – projektregler: en agent, inga påhittade källor, inga följdfrågor.
-- `.kilo/skills/threejs-scene/` – 3D i webbläsaren (Three.js, glTF/GLB, Blender-export, verifiering).
+- `.kilo/skills/threejs-scene/` – 3D i webbläsaren (Three.js, glTF/GLB, Blender-export, testad startmall och automatisk kontroll med `npm run check`).
 - `.kilo/skills/article-writing/` – artiklar som Markdown, med strikt regel mot påhittade fakta.
 
 Skillsen är medvetet bara dessa två: de är det som behövs för 3D och artiklar. Lägg till fler först när ett riktigt behov dyker upp.
 
 ## Vad som inte är verifierat
 
-Konfigen och skillsen är skrivna efter Kilos dokumentation men inte testade mot en körande Kilo + LM Studio, och inte mot hårdvaran i din dator. Storleks- och prestandasiffrorna ovan är ungefärliga.
+Testat: startmallen (bygge, rendering, GLB-laddning, kontrollens felfångst) och id-skriptet, i en Linux-miljö med en låtsasserver. Inte testat: Kilo + LM Studio tillsammans, att modellen faktiskt väljer skillsen, Windows och hårdvaran i din dator. Storleks- och prestandasiffrorna ovan är ungefärliga.
